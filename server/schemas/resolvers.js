@@ -53,11 +53,11 @@ const resolvers = {
       throw new AuthenticationError('Not logged in');
     },
     checkout: async (parent, args, context) => {
-      const url = new URL(context.headers.referer).origin;
       const order = new Order({ products: args.products });
-      const line_items = [];
-
       const { products } = await order.populate('products').execPopulate();
+      const url = new URL(context.headers.referer).origin;
+
+      const line_items = [];
 
       for (let i = 0; i < products.length; i++) {
         const product = await stripe.products.create({
@@ -76,17 +76,17 @@ const resolvers = {
           price: price.id,
           quantity: 1
         });
+
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items,
+          mode: 'payment',
+          success_url: `${url}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${url}/`
+        });
+
+        return { session: session.id };
       }
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items,
-        mode: 'payment',
-        success_url: `${url}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${url}/`
-      });
-
-      return { session: session.id };
     }
   },
   Mutation: {

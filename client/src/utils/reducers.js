@@ -1,98 +1,98 @@
-import { useReducer } from 'react';
 import {
   UPDATE_PRODUCTS,
-  ADD_TO_CART,
-  UPDATE_CART_QUANTITY,
-  REMOVE_FROM_CART,
-  ADD_MULTIPLE_TO_CART,
   UPDATE_CATEGORIES,
   UPDATE_CURRENT_CATEGORY,
+  ADD_TO_CART,
+  ADD_MULTIPLE_TO_CART,
+  REMOVE_FROM_CART,
+  UPDATE_CART_QUANTITY,
   CLEAR_CART,
-  TOGGLE_CART,
+  TOGGLE_CART
 } from './actions';
 
-// The reducer is a function that accepts the current state and an action. It returns a new state based on that action.
-export const reducer = (state, action) => {
-  switch (action.type) {
-    // Returns a copy of state with an update products array. We use the action.products property and spread it's contents into the new array.
-    case UPDATE_PRODUCTS:
-      return {
+const initialState = {
+  products: [],
+  cart: [],
+  cartOpen: false,
+  categories: [],
+  currentCategory: '',
+}
+  
+  const reducer = (state = initialState, action) => {
+    switch (action.type) {
+      // if action type value is the value of `UPDATE_PRODUCTS`, return a new state object with an updated products array
+      case UPDATE_PRODUCTS:
+        return {
+          ...state,
+          products: [...action.products],
+        };
+
+      // if action type value is the value of `UPDATE_CATEGORIES`, return a new state object with an updated categories array
+      case UPDATE_CATEGORIES:
+        return {
         ...state,
-        products: [...action.products],
+        categories: [...action.categories]
       };
 
-    case ADD_TO_CART:
+      case UPDATE_CURRENT_CATEGORY:
+        return {
+        ...state,
+        currentCategory: action.currentCategory
+      };
+      // add item to cart 
+      case ADD_TO_CART:
       return {
         ...state,
         cartOpen: true,
-        cart: [...state.cart, action.product],
+        cart: [...state.cart, action.product]
       };
-    case ADD_MULTIPLE_TO_CART:
+      // add more than 1 item to the cart 
+      case ADD_MULTIPLE_TO_CART:
       return {
         ...state,
         cart: [...state.cart, ...action.products],
       };
-    // Returns a copy of state, sets the cartOpen to true and maps through the items in the cart.
-    // If the item's `id` matches the `id` that was provided in the action.payload, we update the purchase quantity.
-    case UPDATE_CART_QUANTITY:
+      // remove the product that has an action 
+      case REMOVE_FROM_CART:
+      let newState = state.cart.filter(product => {
+        return product._id !== action._id;
+      });
+
+      return {
+        ...state,
+        cartOpen: newState.length > 0,
+        cart: newState
+      };
+      // updating the product that has an action 
+      case UPDATE_CART_QUANTITY:
       return {
         ...state,
         cartOpen: true,
-        cart: state.cart.map((product) => {
+        cart: state.cart.map(product => {
           if (action._id === product._id) {
             product.purchaseQuantity = action.purchaseQuantity;
           }
           return product;
-        }),
+        })
       };
-
-    // First we iterate through each item in the cart and check to see if the `product._id` matches the `action._id`
-    // If so, we remove it from our cart and set the updated state to a variable called `newState`
-    case REMOVE_FROM_CART:
-      let newState = state.cart.filter((product) => {
-        return product._id !== action._id;
-      });
-
-      // Then we return a copy of state and check to see if the cart is empty.
-      // If not, we set the cartOpen status to  `true`. Then we return an updated cart array set to the value of `newState`.
-      return {
-        ...state,
-        cartOpen: newState.length > 0,
-        cart: newState,
-      };
-
-    case CLEAR_CART:
+      // clear all products in the cart
+      case CLEAR_CART:
       return {
         ...state,
         cartOpen: false,
-        cart: [],
+        cart: []
       };
-
-    case TOGGLE_CART:
+      // opposite of state 
+      case TOGGLE_CART:
       return {
         ...state,
-        cartOpen: !state.cartOpen,
+        cartOpen: !state.cartOpen
       };
 
-    case UPDATE_CATEGORIES:
-      return {
-        ...state,
-        categories: [...action.categories],
-      };
+      // if it's none of these actions, do not update state at all and keep things the same!
+      default:
+        return state;
+    }
+  };
 
-    case UPDATE_CURRENT_CATEGORY:
-      return {
-        ...state,
-        currentCategory: action.currentCategory,
-      };
-
-    // Return the state as is in the event that the `action.type` passed to our reducer was not accounted for by the developers
-    // This saves us from a crash.
-    default:
-      return state;
-  }
-};
-
-export function useProductReducer(initialState) {
-  return useReducer(reducer, initialState);
-}
+export default reducer; 
